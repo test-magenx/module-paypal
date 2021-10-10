@@ -114,11 +114,17 @@ class OnAuthorization extends AbstractExpress implements HttpPostActionInterface
     public function execute(): ResultInterface
     {
         $controllerResult = $this->resultFactory->create(ResultFactory::TYPE_JSON);
+        $quoteId = $this->getRequest()->getParam('quoteId');
         $payerId = $this->getRequest()->getParam('payerId');
         $tokenId = $this->getRequest()->getParam('paymentToken');
+        $customerId = $this->getRequest()->getParam('customerId') ?: $this->_customerSession->getId();
 
         try {
-            $quote = $this->_getQuote();
+            if ($quoteId) {
+                $quote = $customerId ? $this->cartRepository->get($quoteId) : $this->guestCartRepository->get($quoteId);
+            } else {
+                $quote = $this->_getQuote();
+            }
 
             $responseContent = [
                 'success' => true,

@@ -47,6 +47,8 @@ define([
         var params = {
             paymentToken: data.orderID,
             payerId: data.payerID,
+            quoteId: clientConfig.quoteId || '',
+            customerId: clientConfig.customerId || '',
             'form_key': clientConfig.formKey
         };
 

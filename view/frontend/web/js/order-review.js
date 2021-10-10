@@ -25,6 +25,7 @@ define([
             shippingMethodContainer: '#shipping-method-container',
             agreementSelector: 'div.checkout-agreements input',
             isAjax: false,
+            updateShippingMethodSubmitSelector: '#update-shipping-method-submit',
             shippingMethodUpdateUrl: null,
             updateOrderSubmitUrl: null,
             canEditShippingMethod: false
@@ -54,12 +55,14 @@ define([
                         this.options.updateOrderSubmitUrl,
                         this.options.updateContainerSelector
                     )
-                ).find(this.options.updateOrderSelector).on('click', $.proxy(this._updateOrderHandler, this)).end();
+                ).find(this.options.updateOrderSelector).on('click', $.proxy(this._updateOrderHandler, this)).end()
+                .find(this.options.updateShippingMethodSubmitSelector).hide().end();
             this._shippingTobilling();
 
             if ($(this.options.shippingSubmitFormSelector).length && this.options.canEditShippingMethod) {
                 this.isShippingSubmitForm = true;
                 $(this.options.shippingSubmitFormSelector)
+                    .find(this.options.updateShippingMethodSubmitSelector).hide().end()
                     .on('change',
                         this.options.shippingSelector,
                         $.proxy(
@@ -116,7 +119,7 @@ define([
             if (this._validateForm()) {
                 this.element.find(this.options.updateOrderSelector).fadeTo(0, 0.5)
                     .end().find(this.options.waitLoadingContainer).show()
-                    .end().trigger('submit');
+                    .end().submit();
                 this._updateOrderSubmit(true);
             }
         },

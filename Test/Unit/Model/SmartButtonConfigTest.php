@@ -57,17 +57,26 @@ class SmartButtonConfigTest extends TestCase
             ->disableOriginalConstructor()
             ->setMethods(['create'])
             ->getMock();
-        $configFactoryMock->expects($this->any())->method('create')->willReturn($this->configMock);
+        $configFactoryMock->expects($this->once())->method('create')->willReturn($this->configMock);
 
-        $sdkUrl = $this->createMock(\Magento\Paypal\Model\SdkUrl::class);
-        $sdkUrl->method('getUrl')->willReturn('http://mock.url');
+        /** @var Store|MockObject $storeMock */
+        $storeMock = $this->createMock(Store::class);
+        $storeMock->method('getBaseCurrencyCode')
+            ->willReturn('USD');
+
+        /** @var StoreManagerInterface|MockObject $storeManagerMock */
+        $storeManagerMock = $this->getMockForAbstractClass(StoreManagerInterface::class);
+        $storeManagerMock->method('getStore')
+            ->willReturn($storeMock);
 
         $this->model = new SmartButtonConfig(
             $this->localeResolverMock,
             $configFactoryMock,
             $scopeConfigMock,
-            $sdkUrl,
+            $storeManagerMock,
             $this->getDefaultStyles(),
+            $this->getDisallowedFundingMap(),
+            $this->getUnsupportedPaymentMethods()
         );
     }
 
@@ -77,12 +86,14 @@ class SmartButtonConfigTest extends TestCase
      * @param string $page
      * @param string $locale
      * @param bool $isCustomize
+     * @param string $disallowedFundings
      * @param string $layout
      * @param string $shape
      * @param string $label
      * @param string $color
-     * @param string $installmentPeriod
+     * @param string $installmentPeriodLabel
      * @param string $installmentPeriodLocale
+     * @param string $isPaypalGuestCheckoutEnabled
      * @param array $expected
      * @dataProvider getConfigDataProvider
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -91,17 +102,42 @@ class SmartButtonConfigTest extends TestCase
         string $page,
         string $locale,
         bool $isCustomize,
+        ?string $disallowedFundings,
         string $layout,
         string $shape,
         string $label,
         string $color,
-        string $installmentPeriod,
+        string $installmentPeriodLabel,
         string $installmentPeriodLocale,
+        bool $isPaypalGuestCheckoutEnabled,
         array $expected = []
     ) {
         $this->localeResolverMock->method('getLocale')->willReturn($locale);
         $this->configMock->method('getValue')->willReturnMap(
             [
+                ['merchant_id', null, 'merchant'],
+                [
+                    'solution_type',
+                    null,
+                    $isPaypalGuestCheckoutEnabled ? Config::EC_SOLUTION_TYPE_SOLE : Config::EC_SOLUTION_TYPE_MARK
+                ],
+                ['sandbox_flag', null, true],
+                ['disable_funding_options', null, $disallowedFundings],
+                ["{$page}_page_button_customize", null, $isCustomize],
+                ["{$page}_page_button_layout", null, $layout],
+                ["{$page}_page_button_color", null, $color],
+                ["{$page}_page_button_shape", null, $shape],
+                ["{$page}_page_button_label", null, $label],
+                ['sandbox_client_id', null, 'sb'],
+                ['merchant_id', null, 'merchant'],
+                [
+                    'solution_type',
+                    null,
+                    $isPaypalGuestCheckoutEnabled ? Config::EC_SOLUTION_TYPE_SOLE : Config::EC_SOLUTION_TYPE_MARK
+                ],
+                ['sandbox_flag', null, true],
+                ['paymentAction', null, 'Authorization'],
+                ['disable_funding_options', null, $disallowedFundings],
                 ["{$page}_page_button_customize", null, $isCustomize],
                 ["{$page}_page_button_layout", null, $layout],
                 ["{$page}_page_button_color", null, $color],
@@ -110,7 +146,7 @@ class SmartButtonConfigTest extends TestCase
                 [
                     $page . '_page_button_' . $installmentPeriodLocale . '_installment_period',
                     null,
-                    $installmentPeriod
+                    $installmentPeriodLabel
                 ]
             ]
         );
@@ -125,7 +161,7 @@ class SmartButtonConfigTest extends TestCase
      */
     public function getConfigDataProvider()
     {
-        return include __DIR__ . '/_files/expected_style_config.php';
+        return include __DIR__ . '/_files/expected_config.php';
     }
 
     /**
@@ -136,5 +172,25 @@ class SmartButtonConfigTest extends TestCase
     private function getDefaultStyles()
     {
         return include __DIR__ . '/_files/default_styles.php';
+    }
+
+    /**
+     * Get disallowed funding map
+     *
+     * @return array
+     */
+    private function getDisallowedFundingMap()
+    {
+        return include __DIR__ . '/_files/disallowed_funding_map.php';
+    }
+
+    /**
+     * Get unsupported payment methods
+     *
+     * @return array
+     */
+    private function getUnsupportedPaymentMethods()
+    {
+        return include __DIR__ . '/_files/unsupported_payment_methods.php';
     }
 }
