@@ -74,7 +74,6 @@ define([
             if (this.iframeIsLoaded) {
                 document.getElementById(this.getCode() + '-iframe')
                     .contentWindow.location.reload();
-                this.paymentReady(false);
             }
 
             this.paymentReady(true);

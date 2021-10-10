@@ -32,9 +32,6 @@ class ViewTest extends TestCase
      */
     protected $block;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $objectManager = new ObjectManager($this);
@@ -49,15 +46,12 @@ class ViewTest extends TestCase
             View::class,
             [
                 'orderCollectionFactory' => $this->orderCollectionFactory,
-                'orderConfig' => $this->orderConfig
+                'orderConfig' => $this->orderConfig,
             ]
         );
     }
 
-    /**
-    * @return void
-    */
-    public function testGetRelatedOrders(): void
+    public function testGetRelatedOrders()
     {
         $visibleStatuses = [];
 
@@ -65,14 +59,17 @@ class ViewTest extends TestCase
             Collection::class,
             ['addFieldToSelect', 'addFieldToFilter', 'setOrder']
         );
-        $orderCollection
+        $orderCollection->expects($this->at(0))
             ->method('addFieldToSelect')
             ->willReturn($orderCollection);
-        $orderCollection
+        $orderCollection->expects($this->at(1))
             ->method('addFieldToFilter')
-            ->withConsecutive([], ['status', ['in' => $visibleStatuses]])
-            ->willReturnOnConsecutiveCalls($orderCollection, $orderCollection);
-        $orderCollection
+            ->willReturn($orderCollection);
+        $orderCollection->expects($this->at(2))
+            ->method('addFieldToFilter')
+            ->with('status', ['in' => $visibleStatuses])
+            ->willReturn($orderCollection);
+        $orderCollection->expects($this->at(3))
             ->method('setOrder')
             ->willReturn($orderCollection);
 

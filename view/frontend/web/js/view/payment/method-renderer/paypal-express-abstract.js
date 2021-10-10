@@ -76,6 +76,7 @@ define([
         continueToPayPal: function () {
             if (additionalValidators.validate()) {
                 //update payment method information if additional data was changed
+                this.selectPaymentMethod();
                 setPaymentMethodAction(this.messageContainer).done(
                     function () {
                         customerData.invalidate(['cart']);

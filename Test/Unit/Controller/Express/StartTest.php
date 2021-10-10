@@ -17,19 +17,22 @@ class StartTest extends ExpressTest
 
     /**
      * @param null|bool $buttonParam
-     *
-     * @return void
      * @dataProvider startActionDataProvider
      */
-    public function testStartAction($buttonParam): void
+    public function testStartAction($buttonParam)
     {
+        $this->request->expects($this->at(1))
+            ->method('getParam')
+            ->with('bml')
+            ->willReturn($buttonParam);
         $this->checkout->expects($this->once())
             ->method('setIsBml')
             ->with((bool)$buttonParam);
 
-        $this->request->method('getParam')
-            ->withConsecutive(['bml'], [Checkout::PAYMENT_INFO_BUTTON])
-            ->willReturnOnConsecutiveCalls($buttonParam, $buttonParam);
+        $this->request->expects($this->at(2))
+            ->method('getParam')
+            ->with(Checkout::PAYMENT_INFO_BUTTON)
+            ->willReturn($buttonParam);
         $this->customerData->expects($this->any())
             ->method('getId')
             ->willReturn(1);
@@ -42,7 +45,7 @@ class StartTest extends ExpressTest
     /**
      * @return array
      */
-    public function startActionDataProvider(): array
+    public function startActionDataProvider()
     {
         return [['1'], [null]];
     }

@@ -69,9 +69,6 @@ class PayflowproTest extends TestCase
      */
     private $eventManager;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->configMock = $this->getMockBuilder(PayflowConfig::class)
@@ -86,7 +83,7 @@ class PayflowproTest extends TestCase
             ->getMockForAbstractClass();
 
         $configFactoryMock = $this->getMockBuilder(ConfigInterfaceFactory::class)
-            ->onlyMethods(['create'])
+            ->setMethods(['create'])
             ->disableOriginalConstructor()
             ->getMock();
         $configFactoryMock->method('create')
@@ -118,15 +115,14 @@ class PayflowproTest extends TestCase
     }
 
     /**
+     * @covers \Magento\Paypal\Model\Payflowpro::canVoid
+     *
      * @param string $message
      * @param int|null $amountPaid
      * @param bool $expected
-     *
-     * @return void
      * @dataProvider canVoidDataProvider
-     * @covers \Magento\Paypal\Model\Payflowpro::canVoid
      */
-    public function testCanVoid($message, $amountPaid, $expected): void
+    public function testCanVoid($message, $amountPaid, $expected)
     {
         /** @var Payment|MockObject $payment */
         $payment = $this->getMockBuilder(Payment::class)
@@ -141,37 +137,29 @@ class PayflowproTest extends TestCase
     /**
      * @return array
      */
-    public function canVoidDataProvider(): array
+    public function canVoidDataProvider()
     {
         return [
             ["Can void transaction if order's paid amount not set", null, true],
             ["Can void transaction if order's paid amount equals zero", 0, true],
-            ["Can't void transaction if order's paid amount greater than zero", 10, false]
+            ["Can't void transaction if order's paid amount greater than zero", 10, false],
         ];
     }
 
-    /**
-    * @return void
-    */
-    public function testCanCapturePartial(): void
+    public function testCanCapturePartial()
     {
         $this->assertTrue($this->payflowpro->canCapturePartial());
     }
 
-    /**
-    * @return void
-    */
-    public function testCanRefundPartialPerInvoice(): void
+    public function testCanRefundPartialPerInvoice()
     {
         $this->assertTrue($this->payflowpro->canRefundPartialPerInvoice());
     }
 
     /**
-     * test for _buildBasicRequest (BDCODE).
-     *
-     * @return void
+     * test for _buildBasicRequest (BDCODE)
      */
-    public function testFetchTransactionInfoForBN(): void
+    public function testFetchTransactionInfoForBN()
     {
         $response = $this->getGatewayResponseObject();
 
@@ -191,13 +179,10 @@ class PayflowproTest extends TestCase
     }
 
     /**
-     * @param DataObject $response
-     * @param DataObject $paymentExpected
-     *
-     * @return void
+     * @param $response
      * @dataProvider setTransStatusDataProvider
      */
-    public function testSetTransStatus($response, $paymentExpected): void
+    public function testSetTransStatus($response, $paymentExpected)
     {
         $payment = $this->helper->getObject(Info::class);
         $this->payflowpro->setTransStatus($payment, $response);
@@ -207,20 +192,20 @@ class PayflowproTest extends TestCase
     /**
      * @return array
      */
-    public function setTransStatusDataProvider(): array
+    public function setTransStatusDataProvider()
     {
         return [
             [
                 'response' => new DataObject(
                     [
                         'pnref' => 'V19A3D27B61E',
-                        'result_code' => Payflowpro::RESPONSE_CODE_APPROVED
+                        'result_code' => Payflowpro::RESPONSE_CODE_APPROVED,
                     ]
                 ),
                 'paymentExpected' => new DataObject(
                     [
                         'transaction_id' => 'V19A3D27B61E',
-                        'is_transaction_closed' => 0
+                        'is_transaction_closed' => 0,
                     ]
                 ),
             ],
@@ -236,10 +221,10 @@ class PayflowproTest extends TestCase
                         'transaction_id' => 'V19A3D27B61E',
                         'is_transaction_closed' => 0,
                         'is_transaction_pending' => true,
-                        'is_fraud_detected' => true
+                        'is_fraud_detected' => true,
                     ]
-                )
-            ]
+                ),
+            ],
         ];
     }
 
@@ -247,35 +232,30 @@ class PayflowproTest extends TestCase
      * @param array $expectsMethods
      * @param bool $result
      *
-     * @return void
      * @dataProvider dataProviderForTestIsActive
      */
-    public function testIsActive(array $expectsMethods, $result): void
+    public function testIsActive(array $expectsMethods, $result)
     {
         $storeId = 15;
-        $withArgs = $willReturnArs = [];
 
+        $i = 0;
         foreach ($expectsMethods as $method => $isActive) {
-            $withArgs[] = [
-                "payment/{$method}/active",
-                ScopeInterface::SCOPE_STORE,
-                $storeId
-            ];
-            $willReturnArs[] = $isActive;
+            $this->scopeConfigMock->expects($this->at($i++))
+                ->method('getValue')
+                ->with(
+                    "payment/{$method}/active",
+                    ScopeInterface::SCOPE_STORE,
+                    $storeId
+                )->willReturn($isActive);
         }
-        $this->scopeConfigMock
-            ->method('getValue')
-            ->withConsecutive(...$withArgs)
-            ->willReturnOnConsecutiveCalls(...$willReturnArs);
 
         $this->assertEquals($result, $this->payflowpro->isActive($storeId));
     }
 
     /**
-     * @return void
      * @covers \Magento\Paypal\Model\Payflowpro::capture
      */
-    public function testCaptureWithBuildPlaceRequest(): void
+    public function testCaptureWithBuildPlaceRequest()
     {
         $paymentMock = $this->getPaymentMock();
         $orderMock = $this->getOrderMock();
@@ -303,7 +283,7 @@ class PayflowproTest extends TestCase
     /**
      * @return array
      */
-    public function dataProviderCaptureAmountRounding(): array
+    public function dataProviderCaptureAmountRounding()
     {
         return [
             [
@@ -314,17 +294,17 @@ class PayflowproTest extends TestCase
             [
                 'amount' => 14.13199999999999999999999999999999999999999999999999,
                 'setAmount' => 49.99,
-                'expectedResult' => 14.13
+                'expectedResult' => 14.13,
             ],
             [
                 'amount' => 14.14,
                 'setAmount' => 49.99,
-                'expectedResult' => 14.14
+                'expectedResult' => 14.14,
             ],
             [
                 'amount' => 14.13999999999999999999999999999999999999999999999999,
                 'setAmount' => 14.14,
-                'expectedResult' => 0
+                'expectedResult' => 0,
             ]
         ];
     }
@@ -333,11 +313,9 @@ class PayflowproTest extends TestCase
      * @param float $amount
      * @param float $setAmount
      * @param float $expectedResult
-     *
-     * @return void
      * @dataProvider dataProviderCaptureAmountRounding
      */
-    public function testCaptureAmountRounding($amount, $setAmount, $expectedResult): void
+    public function testCaptureAmountRounding($amount, $setAmount, $expectedResult)
     {
         $paymentMock = $this->getPaymentMock();
         $orderMock = $this->getMockBuilder(Order::class)
@@ -394,10 +372,9 @@ class PayflowproTest extends TestCase
     }
 
     /**
-     * @return void
      * @covers \Magento\Paypal\Model\Payflowpro::authorize
      */
-    public function testAuthorize(): void
+    public function testAuthorize()
     {
         $paymentMock = $this->getPaymentMock();
         $orderMock = $this->getOrderMock();
@@ -416,37 +393,36 @@ class PayflowproTest extends TestCase
     /**
      * @return array
      */
-    public function dataProviderForTestIsActive(): array
+    public function dataProviderForTestIsActive()
     {
         return [
             [
                 'expectsMethods' => [
                     Config::METHOD_PAYFLOWPRO => 0,
-                    Config::METHOD_PAYMENT_PRO => 1
+                    Config::METHOD_PAYMENT_PRO => 1,
                 ],
-                'result' => true
+                'result' => true,
             ],
             [
                 'expectsMethods' => [
                     Config::METHOD_PAYFLOWPRO => 1
                 ],
-                'result' => true
+                'result' => true,
             ],
             [
                 'expectsMethods' => [
                     Config::METHOD_PAYFLOWPRO => 0,
-                    Config::METHOD_PAYMENT_PRO => 0
+                    Config::METHOD_PAYMENT_PRO => 0,
                 ],
-                'result' => false
-            ]
+                'result' => false,
+            ],
         ];
     }
 
     /**
-     * @return void
      * @covers \Magento\Paypal\Model\Payflowpro::refund()
      */
-    public function testRefund(): void
+    public function testRefund()
     {
         /** @var Payment $paymentMock */
         $paymentMock = $this->getPaymentMock();
@@ -460,15 +436,15 @@ class PayflowproTest extends TestCase
     }
 
     /**
-     * Create mock object for store model.
-     *
+     * Create mock object for store model
      * @return void
      */
-    protected function initStoreMock(): void
+    protected function initStoreMock()
     {
         $storeId = 27;
-        $storeMock = $this->getMockBuilder(Store::class)->disableOriginalConstructor()
-            ->onlyMethods(['getId'])
+        $storeMock = $this->getMockBuilder(Store::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getId'])
             ->getMock();
         $this->storeManagerMock->expects(static::once())
             ->method('getStore')
@@ -479,11 +455,10 @@ class PayflowproTest extends TestCase
     }
 
     /**
-     * Create response object for Payflowpro gateway.
-     *
-     * @return DataObject
+     * Create response object for Payflowpro gateway
+     * @return \Magento\Framework\DataObject
      */
-    protected function getGatewayResponseObject(): DataObject
+    protected function getGatewayResponseObject()
     {
         return new DataObject(
             [
@@ -493,17 +468,16 @@ class PayflowproTest extends TestCase
                 'authcode' => '510PNI',
                 'hostcode' => 'A',
                 'request_id' => 'f930d3dc6824c1f7230c5529dc37ae5e',
-                'result_code' => '0'
+                'result_code' => '0',
             ]
         );
     }
 
     /**
-     * Call payflow gateway request and return response object.
-     *
-     * @return DataObject
+     * Call payflow gateway request and return response object
+     * @return \Magento\Framework\DataObject
      */
-    protected function execGatewayRequest(): DataObject
+    protected function execGatewayRequest()
     {
         $this->initStoreMock();
         $response = $this->getGatewayResponseObject();
@@ -518,25 +492,17 @@ class PayflowproTest extends TestCase
     }
 
     /**
-     * Create mock object for payment model.
-     *
+     * Create mock object for payment model
      * @return MockObject
      */
-    protected function getPaymentMock(): MockObject
+    protected function getPaymentMock()
     {
         $paymentMock = $this->getMockBuilder(Info::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getAdditionalInformation'])
-            ->addMethods(
-                [
-                    'getParentTransactionId',
-                    'getOrder',
-                    'getCcNumber',
-                    'getCcExpMonth',
-                    'getCcExpYear',
-                    'getCcCid'
-                ]
-            )
+            ->setMethods([
+                'getAdditionalInformation', 'getParentTransactionId', 'getOrder',
+                'getCcNumber', 'getCcExpMonth', 'getCcExpYear', 'getCcCid'
+            ])
             ->getMock();
 
         $cardData = [
@@ -561,11 +527,10 @@ class PayflowproTest extends TestCase
     }
 
     /**
-     * Create mock object for order model.
-     *
+     * Create mock object for order model
      * @return MockObject
      */
-    protected function getOrderMock(): MockObject
+    protected function getOrderMock()
     {
         $orderData = [
             'currency' => 'USD',
@@ -574,15 +539,7 @@ class PayflowproTest extends TestCase
         ];
         $orderMock = $this->getMockBuilder(Order::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(
-                [
-                    'getBaseCurrencyCode',
-                    'getIncrementId',
-                    'getId',
-                    'getBillingAddress',
-                    'getShippingAddress'
-                ]
-            )
+            ->setMethods(['getBaseCurrencyCode', 'getIncrementId', 'getId', 'getBillingAddress', 'getShippingAddress'])
             ->getMock();
 
         $orderMock->expects(static::once())
@@ -597,10 +554,7 @@ class PayflowproTest extends TestCase
         return $orderMock;
     }
 
-    /**
-    * @return void
-    */
-    public function testPostRequest(): void
+    public function testPostRequest()
     {
         $expectedResult = new DataObject();
 
@@ -617,10 +571,7 @@ class PayflowproTest extends TestCase
         static::assertSame($expectedResult, $this->payflowpro->postRequest($request, $config));
     }
 
-    /**
-    * @return void
-    */
-    public function testPostRequestException(): void
+    public function testPostRequestException()
     {
         $this->expectException('Magento\Framework\Exception\LocalizedException');
         $this->expectExceptionMessage(
@@ -640,10 +591,9 @@ class PayflowproTest extends TestCase
     }
 
     /**
-     * @return void
      * @covers \Magento\Paypal\Model\Payflowpro::addRequestOrderInfo
      */
-    public function testAddRequestOrderInfo(): void
+    public function testAddRequestOrderInfo()
     {
         $orderData = [
             'id' => 1,
@@ -660,7 +610,7 @@ class PayflowproTest extends TestCase
 
         $orderMock = $this->getMockBuilder(Order::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getIncrementId', 'getId'])
+            ->setMethods(['getIncrementId', 'getId'])
             ->getMock();
         $orderMock->expects(static::once())
             ->method('getId')
@@ -675,10 +625,9 @@ class PayflowproTest extends TestCase
     }
 
     /**
-     * @return void
      * @covers \Magento\Paypal\Model\Payflowpro::assignData
      */
-    public function testAssignData(): void
+    public function testAssignData()
     {
         $data = [
             'cc_type' => 'VI',
@@ -702,11 +651,9 @@ class PayflowproTest extends TestCase
      *
      * @param array $postData
      * @param DataObject $expectedResponse
-     *
-     * @return void
      * @dataProvider dataProviderMapGatewayResponse
      */
-    public function testMapGatewayResponse($postData, $expectedResponse): void
+    public function testMapGatewayResponse($postData, $expectedResponse)
     {
         self::assertEquals(
             $this->payflowpro->mapGatewayResponse($postData, new DataObject()),
@@ -717,7 +664,7 @@ class PayflowproTest extends TestCase
     /**
      * @return array
      */
-    public function dataProviderMapGatewayResponse(): array
+    public function dataProviderMapGatewayResponse()
     {
         return [
             [
@@ -747,7 +694,7 @@ class PayflowproTest extends TestCase
                     'CARDTYPE' => '0',
                     'AVSDATA' => 'NNN',
                     'AVSZIP' => 'N',
-                    'AVSADDR' => 'N'
+                    'AVSADDR' => 'N',
                 ],
                 new DataObject([
                     'billtoname' => 'John Doe',
@@ -786,8 +733,8 @@ class PayflowproTest extends TestCase
                     'email' => 'user@magento.com',
                     'cscmatch' => 'Y',
                     'ccavsstatus' => 'NNN',
-                    'cc_type' => 'VI'
-                ])
+                    'cc_type' => 'VI',
+                ]),
             ]
         ];
     }

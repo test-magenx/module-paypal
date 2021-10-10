@@ -75,7 +75,7 @@ define([
          */
         wipeButtonsConfiguration: function () {
             $(this.buttonConfiguration).removeClass('disabled')
-                .prop('disabled', false);
+                .removeAttr('disabled');
         },
 
         /**

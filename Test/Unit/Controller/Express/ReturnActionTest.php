@@ -16,20 +16,15 @@ class ReturnActionTest extends ExpressTest
 
     /**
      * @param string $path
-     *
-     * @return void
      */
-    protected function expectRedirect($path = '*/*/review'): void
+    protected function _expectRedirect($path = '*/*/review')
     {
         $this->redirect->expects($this->once())
             ->method('redirect')
             ->with($this->anything(), $path, []);
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteAuthorizationRetrial(): void
+    public function testExecuteAuthorizationRetrial()
     {
         $this->request->expects($this->once())
             ->method('getParam')
@@ -39,43 +34,39 @@ class ReturnActionTest extends ExpressTest
             ->method('__call')
             ->with('getPaypalTransactionData')
             ->willReturn(['any array']);
-        $this->expectForwardPlaceOrder();
+        $this->_expectForwardPlaceOrder();
         $this->model->execute();
     }
 
     /**
      * @return array
      */
-    public function trueFalseDataProvider(): array
+    public function trueFalseDataProvider()
     {
         return [[true], [false]];
     }
 
     /**
      * @param bool $canSkipOrderReviewStep
-     *
-     * @return void
      * @dataProvider trueFalseDataProvider
      */
-    public function testExecute($canSkipOrderReviewStep): void
+    public function testExecute($canSkipOrderReviewStep)
     {
-        $this->checkoutSession->method('__call')
+        $this->checkoutSession->expects($this->at(0))
+            ->method('__call')
             ->with('unsPaypalTransactionData');
         $this->checkout->expects($this->once())
             ->method('canSkipOrderReviewStep')
             ->willReturn($canSkipOrderReviewStep);
         if ($canSkipOrderReviewStep) {
-            $this->expectForwardPlaceOrder();
+            $this->_expectForwardPlaceOrder();
         } else {
-            $this->expectRedirect();
+            $this->_expectRedirect();
         }
         $this->model->execute();
     }
 
-    /**
-     * @return void
-     */
-    private function expectForwardPlaceOrder(): void
+    private function _expectForwardPlaceOrder()
     {
         $this->request->expects($this->once())
             ->method('setActionName')

@@ -161,7 +161,7 @@ define([
             var solutionConfiguration = solution.find(buttonConfiguration);
 
             unlock || typeof unlock === 'undefined' ?
-                solutionConfiguration.removeClass('disabled').prop('disabled', false) :
+                solutionConfiguration.removeClass('disabled').removeAttr('disabled') :
                 solutionConfiguration.addClass('disabled').attr('disabled', 'disabled');
         },
 

@@ -18,38 +18,28 @@ use PHPUnit\Framework\TestCase;
 
 class ReaderTest extends TestCase
 {
-    /**
-     * @var  Reader
-     */
+    /** @var  Reader */
     protected $reader;
 
-    /**
-     * @var  FileResolverInterface|MockObject
-     */
+    /** @var  FileResolverInterface|MockObject */
     protected $fileResolver;
 
-    /**
-     * @var  Converter|MockObject
-     */
+    /** @var  Converter|MockObject */
     protected $converter;
 
-    /**
-     * @var  SchemaLocatorInterface|MockObject
-     */
+    /** @var  SchemaLocatorInterface|MockObject */
     protected $schemaLocator;
 
-    /**
-     * @var  ValidationStateInterface|MockObject
-     */
+    /** @var  ValidationStateInterface|MockObject */
     protected $validationState;
 
-    /**
-     * @var Backend|MockObject
-     */
+    /** @var Backend|MockObject */
     protected $helper;
 
     /**
-     * @inheritdoc
+     * Set up
+     *
+     * @return void
      */
     protected function setUp(): void
     {
@@ -70,11 +60,9 @@ class ReaderTest extends TestCase
      * @param string $countryCode
      * @param string $xml
      * @param string $expected
-     *
-     * @return void
      * @dataProvider dataProviderReadExistingCountryConfig
      */
-    public function testReadExistingCountryConfig($countryCode, $xml, $expected): void
+    public function testReadExistingCountryConfig($countryCode, $xml, $expected)
     {
         $this->helper->expects($this->once())
             ->method('getConfigurationCountryCode')
@@ -100,20 +88,21 @@ class ReaderTest extends TestCase
      * @param string $countryCode
      * @param string $xml
      * @param string $expected
-     *
-     * @return void
      * @dataProvider dataProviderReadOtherCountryConfig
      */
-    public function testReadOtherCountryConfig($countryCode, $xml, $expected): void
+    public function testReadOtherCountryConfig($countryCode, $xml, $expected)
     {
         $this->helper->expects($this->once())
             ->method('getConfigurationCountryCode')
             ->willReturn($countryCode);
 
-        $this->fileResolver
+        $this->fileResolver->expects($this->at(0))
             ->method('get')
-            ->withConsecutive([], [$expected])
-            ->willReturnOnConsecutiveCalls([], $xml);
+            ->willReturn([]);
+        $this->fileResolver->expects($this->at(1))
+            ->method('get')
+            ->with($expected)
+            ->willReturn($xml);
 
         $this->reader = new Reader(
             $this->fileResolver,
@@ -129,7 +118,7 @@ class ReaderTest extends TestCase
     /**
      * @return array
      */
-    public function dataProviderReadExistingCountryConfig(): array
+    public function dataProviderReadExistingCountryConfig()
     {
         return [
             ['us', ['<payment/>'], 'adminhtml/rules/payment_us.xml'],
@@ -142,17 +131,17 @@ class ReaderTest extends TestCase
             ['es', ['<payment/>'], 'adminhtml/rules/payment_es.xml'],
             ['hk', ['<payment/>'], 'adminhtml/rules/payment_hk.xml'],
             ['nz', ['<payment/>'], 'adminhtml/rules/payment_nz.xml'],
-            ['de', ['<payment/>'], 'adminhtml/rules/payment_de.xml']
+            ['de', ['<payment/>'], 'adminhtml/rules/payment_de.xml'],
         ];
     }
 
     /**
      * @return array
      */
-    public function dataProviderReadOtherCountryConfig(): array
+    public function dataProviderReadOtherCountryConfig()
     {
         return [
-            ['no', ['<payment/>'], 'adminhtml/rules/payment_other.xml']
+            ['no', ['<payment/>'], 'adminhtml/rules/payment_other.xml'],
         ];
     }
 }

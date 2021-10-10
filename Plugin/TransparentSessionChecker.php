@@ -20,8 +20,6 @@ class TransparentSessionChecker
      */
     private $disableSessionUrls = [
         'paypal/transparent/redirect',
-        'paypal/payflowadvanced/returnUrl',
-        'paypal/payflow/returnUrl',
         'paypal/hostedpro/return',
     ];
 
